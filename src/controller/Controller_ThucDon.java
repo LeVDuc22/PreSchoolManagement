@@ -13,11 +13,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import models.NienKhoa;
 
-public class ConnectDB_ThucDon {
+public class Controller_ThucDon {
 
     private Connection conn;
 
-    public ConnectDB_ThucDon() {
+    public Controller_ThucDon() {
         try {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
