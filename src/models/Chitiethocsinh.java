@@ -11,19 +11,19 @@ package models;
 public class Chitiethocsinh {
     String maLop;
     String maHS;
-    float DuNoHocPhi;
+    float duNoHP;
     String danhGia;
 
     public Chitiethocsinh(){
         this.maLop = "NULL";
         this.maHS = "NULL";
-        this.DuNoHocPhi = 0;
+        this.duNoHP = 0;
         this.danhGia = "NULL";
 }
     public Chitiethocsinh(String maLop, String maHS, float DuNoHocPhi, String danhGia) {
         this.maLop = maLop;
         this.maHS = maHS;
-        this.DuNoHocPhi = DuNoHocPhi;
+        this.duNoHP = DuNoHocPhi;
         this.danhGia = danhGia;
     }
 
@@ -35,8 +35,8 @@ public class Chitiethocsinh {
         return maHS;
     }
 
-    public float getDuNoHocPhi() {
-        return DuNoHocPhi;
+    public float getDuNoHP() {
+        return duNoHP;
     }
 
     public String getDanhGia() {
@@ -51,8 +51,8 @@ public class Chitiethocsinh {
         this.maHS = maHS;
     }
 
-    public void setDuNoHocPhi(float DuNoHocPhi) {
-        this.DuNoHocPhi = DuNoHocPhi;
+    public void setDuNoHP(float duNoHP) {
+        this.duNoHP = duNoHP;
     }
 
     public void setDanhGia(String danhGia) {

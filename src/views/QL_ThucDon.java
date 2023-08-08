@@ -5,11 +5,8 @@ import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
-import controller.ConnectDB_ThucDon;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import controller.Controller_ThucDon;
 import java.io.FileOutputStream;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -31,7 +28,7 @@ public class QL_ThucDon extends javax.swing.JFrame {
     private int selectedRow = -1;
 
     public QL_ThucDon() {
-        connectDB_ThucDon = new ConnectDB_ThucDon();
+        connectDB_ThucDon = new Controller_ThucDon();
         initComponents();
         this.setLocationRelativeTo(null);
       
@@ -42,8 +39,10 @@ public class QL_ThucDon extends javax.swing.JFrame {
         creatBang();
         // Lay du lieu cac nam hoc cho combobox NamHoc
         connectDB_ThucDon.layDanhSachNamHoc(cmbNamHoc);
+      
         //Mã HS tự tăng . Để ban đầu mã thực đơn sẽ hiển thị lên . Nếu ko có nó sẽ ko hiển thị
         taoMaTD();
+    
         dateChooser.addPropertyChangeListener("date", e -> checkDateRange(dateChooser));
         dateChooserSearch.addPropertyChangeListener("date", e -> checkDateRange(dateChooserSearch));
       
@@ -215,7 +214,7 @@ public class QL_ThucDon extends javax.swing.JFrame {
                 jLabel1MouseClicked(evt);
             }
         });
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1180, 500));
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 260, 710, 240));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -237,7 +236,7 @@ public class QL_ThucDon extends javax.swing.JFrame {
             );
         } else {
             // Nếu ngày hợp lệ, gọi phương thức checkDateRange
-            timKiemTheoNgay(selectedDate);
+            searchTD(selectedDate);
 
         }
 
@@ -245,19 +244,19 @@ public class QL_ThucDon extends javax.swing.JFrame {
 
     private void btnThemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnThemActionPerformed
 
-        themThucDon();
+        addTD();
     }//GEN-LAST:event_btnThemActionPerformed
 
     private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCapNhatActionPerformed
-        capNhatThucDon();
+        updateTD();
     }//GEN-LAST:event_btnCapNhatActionPerformed
 
     private void btnXoaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnXoaActionPerformed
-        xoaThucDon();
+        deleteTD();
     }//GEN-LAST:event_btnXoaActionPerformed
 
     private void btnXuatExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnXuatExcelActionPerformed
-        xuatExcelDanhSachThucDon();
+        exportTD();
     }//GEN-LAST:event_btnXuatExcelActionPerformed
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
@@ -280,8 +279,8 @@ public class QL_ThucDon extends javax.swing.JFrame {
     }//GEN-LAST:event_jTable1MouseClicked
 
     private void cmbNamHocItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbNamHocItemStateChanged
-        capNhatBang();
-        CapNhatThoigian();
+        updateTableByCmbNH();
+        gioiHanNamHoc();
     }//GEN-LAST:event_cmbNamHocItemStateChanged
 
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
@@ -292,42 +291,41 @@ public class QL_ThucDon extends javax.swing.JFrame {
          clearText();
     }//GEN-LAST:event_jLabel1MouseClicked
 
-    private void checkDateRange(JDateChooser dateChooser) {
-        Date selectedDate = dateChooser.getDate();
-        Date minDate = dateChooser.getMinSelectableDate();
-        Date maxDate = dateChooser.getMaxSelectableDate();
+private void checkDateRange(JDateChooser dateChooser) {
+    Date selectedDate = dateChooser.getDate();
+    Date minDate = dateChooser.getMinSelectableDate();
+    Date maxDate = dateChooser.getMaxSelectableDate();
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-       
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
-        String selectedDateStr = dateFormat.format(selectedDate);
-        String minDateStr = dateFormat.format(minDate);
-        String maxDateStr = dateFormat.format(maxDate);
+    String selectedDateStr = dateFormat.format(selectedDate);
+    String minDateStr = dateFormat.format(minDate);
+    String maxDateStr = dateFormat.format(maxDate);
 
-        try {
-            Date parsedDate = dateFormat.parse(selectedDateStr);
-            
-            if (parsedDate.before(dateFormat.parse(minDateStr)) || parsedDate.after(dateFormat.parse(maxDateStr))) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Ngày không nằm trong khoảng thời gian cho phép từ " + minDateStr + " đến " + maxDateStr,
-                        "Lỗi",
-                        JOptionPane.WARNING_MESSAGE
-                );
-                dateChooser.setDate(null);
-               
-            }
-        } catch (ParseException e) {
+    try {
+        Date parsedDate = dateFormat.parse(selectedDateStr);
+
+        if (parsedDate.before(dateFormat.parse(minDateStr)) || parsedDate.after(dateFormat.parse(maxDateStr))) {
             JOptionPane.showMessageDialog(
-                    this,
-                    "Định dạng ngày không hợp lệ! Vui lòng nhập ngày theo định dạng dd/MM/yyyy",
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE
+                this,
+                "Ngày không nằm trong khoảng thời gian cho phép từ " + minDateStr + " đến " + maxDateStr,
+                "Lỗi",
+                JOptionPane.WARNING_MESSAGE
             );
-           
-        }
-      
+            dateChooser.setDate(null);
+        } 
+    } catch (ParseException e) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Định dạng ngày không hợp lệ! Vui lòng nhập ngày theo định dạng dd/MM/yyyy",
+            "Lỗi",
+            JOptionPane.ERROR_MESSAGE
+        );
     }
+
+}
+
+
 
     public void creatBang() {
         tableModel = (DefaultTableModel) jTable1.getModel();        // viet them
@@ -336,7 +334,7 @@ public class QL_ThucDon extends javax.swing.JFrame {
         });
     }
 
-    public void CapNhatThoigian() {
+    public void gioiHanNamHoc() {
         NienKhoa nk = new NienKhoa();
         String NamHoc = cmbNamHoc.getSelectedItem().toString();
         nk = connectDB_ThucDon.layThoiGianNienKhoa(NamHoc);
@@ -350,7 +348,7 @@ public class QL_ThucDon extends javax.swing.JFrame {
 //Tạo tự tăng cho mã HS
     public void taoMaTD() {
         // Them đoạn code này để cập nhật lại day sach thuc don xac dinh gia tri ID tiep theo
-        thucDonList = new ConnectDB_ThucDon().layDanhSachThucDon();
+        List<ThucDon> thucDonList = new Controller_ThucDon().layDanhSachThucDon();
         int id = 1;
         boolean state;
         while (true) {
@@ -368,22 +366,6 @@ public class QL_ThucDon extends javax.swing.JFrame {
         }
         txtMaThucDon.setText("TD" + id);
     }
-
-    private void timKiemTheoNgay(Date ngayTimKiem) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        String ngayTimKiemStr = dateFormat.format(ngayTimKiem);
-
-        List<ThucDon> danhSachTimKiem = new ArrayList<>();
-        for (ThucDon thucDon : thucDonList) {
-            String ngayThucDonStr = dateFormat.format(thucDon.getNgay());
-            if (ngayTimKiemStr.equals(ngayThucDonStr)) {
-                danhSachTimKiem.add(thucDon);
-            }
-        }
-
-        capNhatBang(danhSachTimKiem);
-    }
-
     private void clearText() {
 
         taoMaTD();
@@ -394,26 +376,12 @@ public class QL_ThucDon extends javax.swing.JFrame {
         
         //dateChooserSearch.setDate(null);
 
-        capNhatBang();
+        updateTableByCmbNH();
     }
+    
 
-    private void capNhatBang() {
-        //tableModel.setRowCount(0);
-        String namHoc = cmbNamHoc.getSelectedItem().toString();
-        thucDonList = connectDB_ThucDon.layDanhSachThucDonTheoNamHoc(namHoc);
 
-        // sap xep  bang theo ngay
-        Collections.sort(thucDonList, new Comparator<ThucDon>() {
-            @Override
-            public int compare(ThucDon td1, ThucDon td2) {
-                return td1.getNgay().compareTo(td2.getNgay());
-            }
-        });
-
-        capNhatBang(thucDonList);
-    }
-
-    private void capNhatBang(List<ThucDon> danhSachThucDon) {
+   private void updateTable(List<ThucDon> danhSachThucDon) {
         tableModel.setRowCount(0); // Xóa dữ liệu trong bảng hiện tại
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         for (ThucDon thucDon : danhSachThucDon) {
@@ -429,7 +397,24 @@ public class QL_ThucDon extends javax.swing.JFrame {
         }
     }
 
-    private void themThucDon() {
+    private void updateTableByCmbNH() {
+        //tableModel.setRowCount(0);
+        String namHoc = cmbNamHoc.getSelectedItem().toString();
+        thucDonList = connectDB_ThucDon.layDanhSachThucDonTheoNamHoc(namHoc);
+
+        // sap xep  bang theo ngay
+        Collections.sort(thucDonList, new Comparator<ThucDon>() {
+            @Override
+            public int compare(ThucDon td1, ThucDon td2) {
+                return td1.getNgay().compareTo(td2.getNgay());
+            }
+        });
+        updateTable(thucDonList);
+    }
+
+
+
+    private void addTD() {
 
         ThucDon thucDon = new ThucDon();
 
@@ -455,14 +440,12 @@ public class QL_ThucDon extends javax.swing.JFrame {
              clearText();
 
         }
-
-        capNhatBang();
-
-      
-        //}
+                
+                
+        updateTableByCmbNH();
     }
 
-    private void capNhatThucDon() {
+    private void updateTD() {
 
         ThucDon thucDon = new ThucDon();
         thucDon.setMaThucDon(txtMaThucDon.getText());
@@ -486,12 +469,13 @@ public class QL_ThucDon extends javax.swing.JFrame {
 
         }
         // connectDB_ThucDon.capNhatThucDonDB(thucDon);
-        capNhatBang();
+        updateTableByCmbNH();
+       
         clearText();
 
     }
 
-    private void xoaThucDon() {
+    private void deleteTD() {
         int selectedRow = jTable1.getSelectedRow();
         if (selectedRow != -1) {
             String maThucDon = tableModel.getValueAt(selectedRow, 0).toString();
@@ -499,15 +483,32 @@ public class QL_ThucDon extends javax.swing.JFrame {
             if (option == JOptionPane.YES_OPTION) {
                 String namHoc = cmbNamHoc.getSelectedItem().toString();
                 connectDB_ThucDon.xoaThucDonDB(maThucDon);
-                capNhatBang();
+                updateTableByCmbNH();
+            
                 clearText();
             }
         } else {
             JOptionPane.showMessageDialog(null, "Vui lòng chọn một thực đơn để xóa!");
         }
     }
+    
+        private void searchTD(Date ngayTimKiem) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        String ngayTimKiemStr = dateFormat.format(ngayTimKiem);
 
-    private void xuatExcelDanhSachThucDon() {
+        List<ThucDon> danhSachTimKiem = new ArrayList<>();
+       
+        for (ThucDon thucDon : thucDonList) {
+            String ngayThucDonStr = dateFormat.format(thucDon.getNgay());
+            if (ngayTimKiemStr.equals(ngayThucDonStr)) {
+                danhSachTimKiem.add(thucDon);
+            }
+        }
+
+        updateTable(danhSachTimKiem);
+    }
+
+    private void exportTD() {
         if (tableModel.getRowCount() == 0) {
             JOptionPane.showMessageDialog(null, "Không có dữ liệu để xuất Excel!");
             return;
@@ -559,7 +560,7 @@ public class QL_ThucDon extends javax.swing.JFrame {
         });
     }
     private String MaNK = " ";
-    private ConnectDB_ThucDon connectDB_ThucDon;
+    private Controller_ThucDon connectDB_ThucDon;
     private DefaultTableModel tableModel;
     private List<ThucDon> thucDonList;
     // Variables declaration - do not modify//GEN-BEGIN:variables
