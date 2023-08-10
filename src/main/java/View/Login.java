@@ -50,9 +50,9 @@ public class Login extends javax.swing.JFrame {
         btnLogin = new Button("Login");
         btnLogin.setEnabled(false);
         errorLabel = new JLabel();
-        usernameLabel.setPreferredSize(new Dimension(70, 35));
+        usernameLabel.setPreferredSize(new Dimension(75, 35));
         passwordLabel.setPreferredSize(new Dimension(75, 35));
-        textEmpty.setPreferredSize(new Dimension(70, 20));
+        textEmpty.setPreferredSize(new Dimension(75, 20));
         username.setPreferredSize(new Dimension(250, 35));
         password.setPreferredSize(new Dimension(250, 35));
         btnLogin.setPreferredSize(new Dimension(250, 35));

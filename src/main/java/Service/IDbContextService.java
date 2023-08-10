@@ -18,4 +18,6 @@ public interface IDbContextService {
     int delete(String tableName, String whereClause);
     ResultSet GetDataByModel(String tableName, Object object);
     boolean filterMultiOneObject(String tableName, List<FilterModel> filterModel);
+    ResultSet GetAll(String tableName);
+    int getCount(String tableName);
 }

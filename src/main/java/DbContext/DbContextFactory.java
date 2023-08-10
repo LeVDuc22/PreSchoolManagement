@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * @author My laptop
  */
 public class DbContextFactory {
-    private static final String ConnectString =  "jdbc:sqlserver://localhost:1433;databaseName=PreSchool;encrypt=true;trustServerCertificate=true";
+    private static final String ConnectString =  "jdbc:sqlserver://localhost:1433;databaseName=PreSchool;encrypt=false;trustServerCertificate=false";
     private static final String User ="sa";
     private  static  final  String Password ="123456";
     public  static Connection CreateConnect() throws SQLException {

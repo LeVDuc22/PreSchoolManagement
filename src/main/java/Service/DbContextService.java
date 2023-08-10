@@ -11,10 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -40,7 +37,20 @@ public class DbContextService implements IDbContextService {
 
     @Override
     public int insert(String tableName, Object object) {
-        return 0;
+        try {
+            var stringBuilder = new StringBuilder();
+            stringBuilder.append("insert into ").append(tableName +" (");
+            var excuteString = "";
+            Field[] fields = object.getClass().getDeclaredFields();
+            var fieldResult = new ArrayList<Field>(Arrays.asList(fields));
+            excuteString = GenerateInsertQuery(stringBuilder,fieldResult,object);
+
+            PreparedStatement statement = _connection.prepareStatement(excuteString);
+            return statement.executeUpdate();
+        }
+        catch (Exception ex){
+            return  -1;
+        }
     }
 
     @Override
@@ -131,6 +141,32 @@ public class DbContextService implements IDbContextService {
         }
     }
 
+    @Override
+    public ResultSet GetAll(String tableName) {
+        try {
+            var stringBuilder = new StringBuilder();
+            stringBuilder.append("select * from ").append(tableName);
+            var statement = _connection.createStatement();
+            return statement.executeQuery(stringBuilder.toString());
+        }
+        catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public int getCount(String tableName) {
+        try {
+            var stringBuilder = new StringBuilder();
+            stringBuilder.append("SELECT COUNT(*) FROM").append(tableName);
+            var statement = _connection.createStatement();
+            return statement.executeQuery(stringBuilder.toString()).getInt(1);
+        }
+        catch (Exception ex) {
+            return -1;
+        }
+    }
+
     private String GenerateFilterString(StringBuilder stringBuilder, List<FilterModel> filters) throws IllegalArgumentException, IllegalAccessException {
         for (FilterModel filter : filters) {
             stringBuilder.append(filter.getColumnName() + "= '" + filter.getValueFilter()).append("' and ");
@@ -152,5 +188,37 @@ public class DbContextService implements IDbContextService {
         var value = fieldPK.get(object).toString();
         return new StringBuilder(stringResult).append(" where "+ properties + "= '" + value +"'").toString();
     }
+    private String GenerateInsertQuery(StringBuilder stringBuilder, ArrayList<Field> arrayList, Object object) throws IllegalArgumentException, IllegalAccessException {
+        String[] properties = new String[arrayList.size()];
 
+        HashMap<String,String> values = new HashMap<>();
+        int i =0;
+        for (Field field : arrayList) {
+            field.setAccessible(true);
+            properties[i] = field.getName();
+            values.put(field.getType().toString(),field.get(object).toString());
+            i++;
+        }
+        for (i=0; i< properties.length; i++){
+            if(i != properties.length - 1){
+                stringBuilder.append(properties[i] +" ,");
+            }
+            else {
+                stringBuilder.append(properties[i] + ")");
+            }
+        }
+        stringBuilder.append(" values (");
+        for(Map.Entry<String, String> entry : values.entrySet()){
+            if(entry.getKey().equals("System.String")){
+                stringBuilder.append("' " + entry.getValue() + "' , ");
+            }
+            else {
+                stringBuilder.append(entry.getValue()+ ", ");
+            }
+        }
+        var result = stringBuilder.toString().lastIndexOf((','));
+        var stringResult = stringBuilder.toString().substring(0,result -1);
+
+        return new StringBuilder(stringResult).append(")").toString();
+    }
 }
