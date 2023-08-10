@@ -9,10 +9,14 @@ import Models.Contants;
 import Models.NienKhoa;
 import Ultity.RegExpInputVerifier;
 import View.Login;
+import ViewModels.DeleteModel;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -23,6 +27,7 @@ import static com.sun.java.accessibility.util.AWTEventMonitor.addMouseMotionList
  * @author My laptop
  */
 public class Panel_NienKhoa {
+    public ArrayList<NienKhoa> data;
     public JTextField NamHoc = new JTextField();
     private JTextField NgayBatDau = new JTextField();
     private JTextField NgayKetThuc = new JTextField();
@@ -45,11 +50,11 @@ public class Panel_NienKhoa {
     private JTextField searchField = new JTextField();
     private JButton searchNBtn = new JButton("Tìm kiếm");
     private HashMap<Integer, Boolean> Flag = new HashMap<>();
-    private String Id;
+    private NienKhoa nienKhoa = new NienKhoa();
     public JSplitPane getjSplitPane() {
         return jSplitPane;
     }
-
+    public int RowSeleted;
     public void setjSplitPane(JSplitPane jSplitPane) {
         this.jSplitPane = jSplitPane;
     }
@@ -59,6 +64,7 @@ public class Panel_NienKhoa {
     }
 
     public Panel_NienKhoa() {
+        data = NienKhoaController.GetAll();
         Flag.put(1, false);
         Flag.put(2, false);
         Flag.put(3, false);
@@ -79,8 +85,12 @@ public class Panel_NienKhoa {
         XoaBtn.setBounds(209,250,60,35);
         LamMoiBtn.setBounds(304,250,60,35);
         String[] columnNames = {"Năm học", "Ngày bắt đầu", "Ngày kết thúc"};
-        String[][] data = {{"2019-2020","01-05-2019","01-05-2020"}};
-        var model = new DefaultTableModel(data,columnNames);
+        var model = new DefaultTableModel();
+        model.addColumn("Mã");
+        model.addColumn("Niên khóa");
+        model.addColumn("Ngày bắt đầu");
+        model.addColumn("Ngày kết thúc");
+        addData(model,data);
         table = new JTable(model);
         var scrollPane = new JScrollPane(table);
         nienKhoaError.setForeground(Color.RED);
@@ -119,6 +129,22 @@ public class Panel_NienKhoa {
 
 
     }
+
+    private void addData(DefaultTableModel model, ArrayList<NienKhoa> data) {
+        for (var item : data){
+            var ngayBatDau = reverseTime(item.getNgayBatDau());
+            var ngayKetThuc = reverseTime(item.getNgayKetThuc());
+            model.addRow(new Object[]{item.getMa(),item.getNamHoc(),ngayBatDau,ngayKetThuc});
+        }
+    }
+    private String reverseTime(String time){
+        StringTokenizer tokenizer = new StringTokenizer(time, "-");
+        String year = tokenizer.nextToken();
+        String month = tokenizer.nextToken();
+        String day = tokenizer.nextToken();
+        return day + "-" + month + "-" + year;
+    }
+
     public  void addEventListenner(){
 
         LamMoiBtn.addActionListener(new ActionListener() {
@@ -130,23 +156,80 @@ public class Panel_NienKhoa {
                 nienKhoaError.setText("");
                 startDateError.setText("");
                 dueDateError.setText("");
-                Id="";
+                XoaBtn.setEnabled(false);
+                ThemButton.setEnabled(false);
+                CapNhatBtn.setEnabled(false);
+                nienKhoa.setMa("");
             }
         });
-         ThemButton.addActionListener(new ActionListener(){
+        XoaBtn.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    var nienkhoa = new NienKhoa("T1",NamHoc.getText().toString(),NgayKetThuc.getText().toString(),NgayKetThuc.getText().toString());
-                    var result = NienKhoaController.AddNienKhoa(nienkhoa);
+
+                    var result = NienKhoaController.Delete(new DeleteModel("Ma", nienKhoa.getMa()));
+                    if (result) {
+                        JOptionPane.showMessageDialog(null, "Xóa niên khóa thành công!");
+                        DefaultTableModel model = (DefaultTableModel) table.getModel();
+                        model.removeRow(RowSeleted);
+                        NamHoc.setText("");
+                        NgayBatDau.setText("");
+                        NgayKetThuc.setText("");
+                        XoaBtn.setEnabled(false);
+                        CapNhatBtn.setEnabled(false);
+                    }
+
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+            }
+        });
+        CapNhatBtn.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    nienKhoa.setNamHoc(NamHoc.getText());
+                    nienKhoa.setNgayBatDau(NgayBatDau.getText());
+                    nienKhoa.setNgayKetThuc(NgayKetThuc.getText());
+                    var result = NienKhoaController.Update(nienKhoa);
                     if(result){
-                        JOptionPane.showMessageDialog(null, "Thêm mới niên khóa thành công!");
+                        JOptionPane.showMessageDialog(null, "Cập nhật niên khóa thành công!");
+                        DefaultTableModel model = (DefaultTableModel) table.getModel();
+                        model.setValueAt(nienKhoa.getNamHoc(), RowSeleted, 1);
+                        model.setValueAt(nienKhoa.getNgayBatDau(), RowSeleted, 2);
+                        model.setValueAt(nienKhoa.getNgayKetThuc(), RowSeleted, 3);
+                        NamHoc.setText("");
+                        NgayBatDau.setText("");
+                        NgayKetThuc.setText("");
+                        XoaBtn.setEnabled(false);
+                        CapNhatBtn.setEnabled(false);
                     }
                 }
                 catch (Exception ex){
                     System.out.println(ex);
                 }
 
+            }
+
+
+        });
+         ThemButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    var nienkhoa = new NienKhoa(NamHoc.getText().toString(),NgayBatDau.getText().toString(),NgayKetThuc.getText().toString());
+                    nienkhoa.setMa(NienKhoaController.setMa());
+                    var result = NienKhoaController.AddNienKhoa(nienkhoa);
+                    if(result){
+                        JOptionPane.showMessageDialog(null, "Thêm mới niên khóa thành công!");
+                        NamHoc.setText("");
+                        NgayBatDau.setText("");
+                        NgayKetThuc.setText("");
+                    }
+                }
+                catch (Exception ex){
+                    System.out.println(ex);
+                }
 
             }
         });
@@ -172,12 +255,10 @@ public class Panel_NienKhoa {
                 }
                 if (!Flag.containsValue(false)) {
                     ThemButton.setEnabled(true);
-                    CapNhatBtn.setEnabled(true);
-                    XoaBtn.setEnabled(true);
+
                 } else {
                     ThemButton.setEnabled(false);
-                    CapNhatBtn.setEnabled(false);
-                    XoaBtn.setEnabled(false);
+
                 }
             }
         });
@@ -201,12 +282,10 @@ public class Panel_NienKhoa {
                 }
                 if (!Flag.containsValue(false)) {
                     ThemButton.setEnabled(true);
-                    CapNhatBtn.setEnabled(true);
-                    XoaBtn.setEnabled(true);
+
                 } else {
                     ThemButton.setEnabled(false);
-                    CapNhatBtn.setEnabled(false);
-                    XoaBtn.setEnabled(false);
+
                 }
             }
         });
@@ -232,13 +311,27 @@ public class Panel_NienKhoa {
                 }
                 if (!Flag.containsValue(false)) {
                     ThemButton.setEnabled(true);
-                    CapNhatBtn.setEnabled(true);
-                    XoaBtn.setEnabled(true);
                 } else {
                     ThemButton.setEnabled(false);
-                    CapNhatBtn.setEnabled(false);
-                    XoaBtn.setEnabled(false);
+
                 }
+            }
+        });
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Get the row index of the clicked row
+                int row = table.rowAtPoint(e.getPoint());
+                nienKhoa.setMa(table.getValueAt(row, 0).toString().trim());
+                NamHoc.setText(table.getValueAt(row, 1).toString().trim());
+                NgayBatDau.setText(table.getValueAt(row, 2).toString().trim());
+                NgayKetThuc.setText(table.getValueAt(row, 2).toString().trim());
+                // Get the data of the clicked row
+                if(!nienKhoa.getMa().isEmpty()){
+                    CapNhatBtn.setEnabled(true);
+                    XoaBtn.setEnabled(true);
+                }
+                RowSeleted = row;
             }
         });
 

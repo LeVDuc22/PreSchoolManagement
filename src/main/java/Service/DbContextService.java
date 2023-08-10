@@ -5,6 +5,7 @@
 package Service;
 
 import DbContext.DbContextFactory;
+import ViewModels.DeleteModel;
 import ViewModels.FilterModel;
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -75,8 +76,18 @@ public class DbContextService implements IDbContextService {
     }
 
     @Override
-    public int delete(String tableName, String whereClause) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public int delete(String tableName, DeleteModel deleteModel) {
+        try{
+            var stringBuilder = new StringBuilder();
+            stringBuilder.append("delete  from ").append(tableName).append(" where ");
+            stringBuilder.append(deleteModel.getColumnName() + "= '" + deleteModel.getValue()).append("'");
+            PreparedStatement statement = _connection.prepareStatement(stringBuilder.toString());
+            return statement.executeUpdate();
+        }
+        catch (Exception ex){
+            return  -1;
+        }
+
     }
 
     @Override
@@ -191,12 +202,12 @@ public class DbContextService implements IDbContextService {
     private String GenerateInsertQuery(StringBuilder stringBuilder, ArrayList<Field> arrayList, Object object) throws IllegalArgumentException, IllegalAccessException {
         String[] properties = new String[arrayList.size()];
 
-        HashMap<String,String> values = new HashMap<>();
+        LinkedHashMap<String,String> values = new LinkedHashMap<>();
         int i =0;
         for (Field field : arrayList) {
             field.setAccessible(true);
             properties[i] = field.getName();
-            values.put(field.getType().toString(),field.get(object).toString());
+            values.put(field.get(object).toString(),field.getType().toString());
             i++;
         }
         for (i=0; i< properties.length; i++){
@@ -209,15 +220,15 @@ public class DbContextService implements IDbContextService {
         }
         stringBuilder.append(" values (");
         for(Map.Entry<String, String> entry : values.entrySet()){
-            if(entry.getKey().equals("System.String")){
-                stringBuilder.append("' " + entry.getValue() + "' , ");
+            if(entry.getValue().contains("String")){
+                stringBuilder.append("\'").append( entry.getKey()).append("\'").append(" ,");
             }
             else {
-                stringBuilder.append(entry.getValue()+ ", ");
+                stringBuilder.append(entry.getKey()+ ", ");
             }
         }
         var result = stringBuilder.toString().lastIndexOf((','));
-        var stringResult = stringBuilder.toString().substring(0,result -1);
+        var stringResult = stringBuilder.toString().substring(0,result);
 
         return new StringBuilder(stringResult).append(")").toString();
     }

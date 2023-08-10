@@ -4,6 +4,7 @@
  */
 package Service;
 
+import ViewModels.DeleteModel;
 import ViewModels.FilterModel;
 import java.sql.ResultSet;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 public interface IDbContextService {
     int insert(String tableName, Object object);
     int update(String tableName, Object object);
-    int delete(String tableName, String whereClause);
+    int delete(String tableName, DeleteModel deleteModel);
     ResultSet GetDataByModel(String tableName, Object object);
     boolean filterMultiOneObject(String tableName, List<FilterModel> filterModel);
     ResultSet GetAll(String tableName);

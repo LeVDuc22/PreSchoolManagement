@@ -11,6 +11,10 @@ package com.mycompany.preschool;
 public class PreSchool {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        var value ="Duc";
+        StringBuilder sb = new StringBuilder("Hello");
+        sb.append("\'").append(value).append("\'");
+
+        System.out.println(sb.toString());
     }
 }
