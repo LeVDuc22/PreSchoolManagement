@@ -1,10 +1,14 @@
 package Controller;
 
 import DbContext.DbContextFactory;
+import Models.ChiTietGiaoVien;
+import Models.NienKhoa;
 import Service.DbContextService;
 import ViewModels.GiaoVienViewModel;
 
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class PcgvController {
    public static ArrayList<GiaoVienViewModel> GetAll(String MaNienKhoa){
@@ -35,9 +39,7 @@ public class PcgvController {
    public static boolean CheckNienKhoaExit(String MaNienKhoa){
       try{
          var _connection = DbContextFactory.CreateConnect();
-         var queriesString = "select COUNT(*) from ChiTietGiaoVien\n" +
-                 "join LopHoc on ChiTietGiaoVien.MaLopHoc = LopHoc.Ma\n" +
-                 "where LopHoc.MaNienKhoa = " + MaNienKhoa;
+         var queriesString = "select COUNT(*) from ChiTietGiaoVien join LopHoc on ChiTietGiaoVien.MaLopHoc = LopHoc.Ma where LopHoc.MaNienKhoa = '" +MaNienKhoa+"'";
          var statement = _connection.createStatement();
          var result = statement.executeQuery(queriesString);
          if(result.next() && result.getDouble(1) > 0){
@@ -48,6 +50,36 @@ public class PcgvController {
       }
       catch (Exception ex){
          return  false;
+      }
+   }
+   public static boolean AddChitietGV(ChiTietGiaoVien chiTietGiaoVien){
+      try {
+         var connection = DbContextFactory.CreateConnect();
+         Statement statement = connection.createStatement();
+         var excuteString = "INSERT INTO ChiTietGiaoVien (MaGiaoVien, MaLopHoc) VALUES ('" + chiTietGiaoVien.getMaGiaoVien() + "','" +  chiTietGiaoVien.getMaLopHoc() + "')";
+         var value = statement.executeUpdate(excuteString);
+         connection.close();
+         return  value != -1;
+      } catch (Exception e) {
+         return false;
+      }
+   }
+   public static HashMap<String,String> GetGVPC(String MaLop) {
+      try {
+         var _connection = DbContextFactory.CreateConnect();
+         var queriesString = "select ChiTietGiaoVien.MaGiaoVien, NguoiDung.HoTen from ChiTietGiaoVien \n" +
+                 "join GiaoVien on ChiTietGiaoVien.MaGiaoVien = GiaoVien.Ma\n" +
+                 "join NguoiDung on NguoiDung.Ma = GiaoVien.MaNguoiDung\n" +
+                 "where ChiTietGiaoVien.MaLopHoc ='" + MaLop + "'";
+         var statement = _connection.createStatement();
+         var result = statement.executeQuery(queriesString);
+         var value = new HashMap<String,String>();
+         while (result.next()){
+            value.put(result.getString(1),result.getString(2));
+         }
+         return value;
+      } catch (Exception ex) {
+         return null;
       }
    }
 }

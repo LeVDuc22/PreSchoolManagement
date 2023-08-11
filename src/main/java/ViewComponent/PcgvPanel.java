@@ -3,18 +3,21 @@ package ViewComponent;
 import Controller.NienKhoaController;
 import Controller.PcgvController;
 import Controller.QldsLopHocController;
+import Models.ChiTietGiaoVien;
+import Models.ChiTietHocSinh;
 import Models.LopHoc;
 import Models.NienKhoa;
+import ViewModels.DeleteModel;
 import ViewModels.FilterModel;
 import ViewModels.GiaoVienViewModel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class PcgvPanel {
     private JLabel NienKhoaLabel = new JLabel("Năm học");
@@ -42,6 +45,9 @@ public class PcgvPanel {
     private HashMap<String,String> comboxListNk = new HashMap<>();
     private HashMap<String,String> comboxListLh = new HashMap<>();
     private ArrayList<GiaoVienViewModel> giaoVienData = new ArrayList<>();
+    private String MaGiaoVien;
+    private int RowSeleted;
+    private HashMap<String,String> giaoVienInLop;
     public PcgvPanel() {
 
         lisNienKhoa = NienKhoaController.GetAll();
@@ -62,6 +68,7 @@ public class PcgvPanel {
         if(!listLopHoc.isEmpty()){
             String[] LopHoc = new String[listLopHoc.size()];
             i=0;
+            MaLopHoc = listLopHoc.get(0).getMa();
             for (var item:listLopHoc
             ) {
                 comboxListLh.put(item.getTenLopHoc().trim(),item.getMa());
@@ -73,7 +80,7 @@ public class PcgvPanel {
         else{
             listLopHocCb = new JComboBox<>();
         }
-
+        giaoVienInLop = PcgvController.GetGVPC(MaLopHoc);
         listNienKhoaCb = new JComboBox<>(nienKhoas);
         leftPanel.setBounds(0,0,400,600);
         leftPanel.setLayout(new BorderLayout());
@@ -85,7 +92,14 @@ public class PcgvPanel {
         XoaBtn.setBounds(240,435,80,35);
         String[] columnNames = {"Mã giáo viên","Giáo viên"};
         String[][] data = {{"Lớp A","Lê Văn A"}};
-        var modelLopHoc = new DefaultTableModel(data,columnNames);
+        String[][] array = new String[giaoVienInLop.size()][2];
+        i=0;
+        for (Map.Entry<String, String> entry : giaoVienInLop.entrySet()) {
+            array[i][0] = entry.getKey();
+            array[i][1] = entry.getValue();
+            i++;
+        }
+        var modelLopHoc = new DefaultTableModel(array,columnNames);
         tableLopHoc = new JTable(modelLopHoc);
         var scrollPaneLeft = new JScrollPane(tableLopHoc);
         scrollPaneLeft.setBounds(15,120,345,300);
@@ -133,6 +147,38 @@ public class PcgvPanel {
         }
     }
     private void addEventListenner() {
+        ThemButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if(!MaGiaoVien.isEmpty() && !MaLopHoc.isEmpty()){
+                        var result = PcgvController.AddChitietGV(new ChiTietGiaoVien(MaGiaoVien,MaLopHoc));
+                        if(result){
+                            JOptionPane.showMessageDialog(null, "Phân giáo viên thành công!");
+                            DefaultTableModel model = (DefaultTableModel) tableGiaoVien.getModel();
+                            model.setValueAt(MaLopHoc, RowSeleted, 3);
+                        }
+                    }
+                    var chiTietGV = new ChiTietGiaoVien(MaGiaoVien,MaLopHoc);
+
+
+                }
+                catch (Exception ex){
+                    System.out.println(ex);
+                }
+
+            }
+        });
+        tableGiaoVien.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+                int row = tableGiaoVien.rowAtPoint(e.getPoint());
+
+                MaGiaoVien = tableGiaoVien.getValueAt(row, 0).toString().trim();
+                RowSeleted = row;
+            }
+        });
         listNienKhoaCb.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -153,8 +199,31 @@ public class PcgvPanel {
                     giaoVienData = PcgvController.GetAll(MaNienKhoa);
                     refreshData((DefaultTableModel) tableGiaoVien.getModel(),giaoVienData);
                 }
-                DefaultTableModel modelTest = (DefaultTableModel) tableGiaoVien.getModel();
+                else{
+                    DefaultTableModel modelTest = (DefaultTableModel) tableGiaoVien.getModel();
+                    modelTest.setRowCount(0);
+                }
+
+
+
+            }
+        });
+        listLopHocCb.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                // Get the selected item
+                String selectedItem = (String) e.getItem();
+
+                MaLopHoc = comboxListLh.get(selectedItem).trim();
+                giaoVienInLop = PcgvController.GetGVPC(MaLopHoc);
+
+                DefaultTableModel modelTest = (DefaultTableModel) tableLopHoc.getModel();
                 modelTest.setRowCount(0);
+                for (Map.Entry<String, String> entry : giaoVienInLop.entrySet()) {
+
+                    modelTest.addRow(new Object[]{entry.getKey(),entry.getValue()});
+                }
+
 
 
             }
