@@ -127,7 +127,18 @@ public class DbContextService implements IDbContextService {
         }
 
     }
-
+    public ResultSet filterModel(String tableName, List<FilterModel> filterModel) {
+        try {
+            var stringBuilder = new StringBuilder();
+            stringBuilder.append("select * from ").append(tableName).append(" where ");
+            var queriesString = GenerateFilterString(stringBuilder, filterModel);
+            var statement = _connection.createStatement();
+            return statement.executeQuery(queriesString);
+        } catch (Exception e) {
+            System.err.println(e.toString());
+            return null;
+        }
+    }
     private String GenerateQueryString(StringBuilder stringBuilder, ArrayList<Field> arrayList, Object object) throws IllegalArgumentException, IllegalAccessException {
         for (Field field : arrayList) {
             field.setAccessible(true);
@@ -166,12 +177,16 @@ public class DbContextService implements IDbContextService {
     }
 
     @Override
-    public int getCount(String tableName) {
+    public double getCount(String tableName) {
         try {
             var stringBuilder = new StringBuilder();
-            stringBuilder.append("SELECT COUNT(*) FROM").append(tableName);
+            stringBuilder.append("SELECT COUNT(*) FROM ").append(tableName);
             var statement = _connection.createStatement();
-            return statement.executeQuery(stringBuilder.toString()).getInt(1);
+             var value = statement.executeQuery(stringBuilder.toString());
+            while (value.next()) {
+                return value.getDouble(1);
+            }
+            return  -1;
         }
         catch (Exception ex) {
             return -1;

@@ -110,7 +110,6 @@ public class Panel_NienKhoa {
         leftPanel.add(startDateError);
         leftPanel.add(dueDateError);
         leftPanel.add(emtpy);
-
         rightPanel.setLayout(new BorderLayout());
         searchNBtn.setBounds(300,25,100,35);
         searchField.setBounds(15,25,250,35);
@@ -217,14 +216,17 @@ public class Panel_NienKhoa {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    var nienkhoa = new NienKhoa(NamHoc.getText().toString(),NgayBatDau.getText().toString(),NgayKetThuc.getText().toString());
-                    nienkhoa.setMa(NienKhoaController.setMa());
+                    var ma= NienKhoaController.setMa();
+                    var nienkhoa = new NienKhoa(ma,NamHoc.getText().toString(),NgayBatDau.getText().toString(),NgayKetThuc.getText().toString());
+
                     var result = NienKhoaController.AddNienKhoa(nienkhoa);
                     if(result){
                         JOptionPane.showMessageDialog(null, "Thêm mới niên khóa thành công!");
                         NamHoc.setText("");
                         NgayBatDau.setText("");
                         NgayKetThuc.setText("");
+                        DefaultTableModel model = (DefaultTableModel) table.getModel();
+                        model.addRow(new Object[]{nienkhoa.getMa(),nienkhoa.getNamHoc(),nienkhoa.getNgayBatDau(),nienkhoa.getNgayKetThuc()});
                     }
                 }
                 catch (Exception ex){
@@ -320,16 +322,17 @@ public class Panel_NienKhoa {
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Get the row index of the clicked row
+
                 int row = table.rowAtPoint(e.getPoint());
                 nienKhoa.setMa(table.getValueAt(row, 0).toString().trim());
                 NamHoc.setText(table.getValueAt(row, 1).toString().trim());
                 NgayBatDau.setText(table.getValueAt(row, 2).toString().trim());
                 NgayKetThuc.setText(table.getValueAt(row, 2).toString().trim());
-                // Get the data of the clicked row
+
                 if(!nienKhoa.getMa().isEmpty()){
                     CapNhatBtn.setEnabled(true);
                     XoaBtn.setEnabled(true);
+                    ThemButton.setEnabled(false);
                 }
                 RowSeleted = row;
             }

@@ -26,7 +26,7 @@ public class NienKhoaController {
             DbContextService service = new DbContextService();
             var value = service.getCount(tableName);
             service.closeDbConext();
-            return prefix + value;
+            return prefix +(int)value;
         } catch (Exception e) {
             return prefix;
         }

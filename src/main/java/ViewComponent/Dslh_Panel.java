@@ -1,22 +1,27 @@
 package ViewComponent;
 
+import Controller.NienKhoaController;
+import Controller.QldsLopHocController;
 import Models.Contants;
+import Models.LopHoc;
+import Models.NienKhoa;
 import Ultity.RegExpInputVerifier;
+import ViewModels.DeleteModel;
+import ViewModels.FilterModel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Dslh_Panel {
     private JLabel NienKhoaLabel = new JLabel("Năm học");
-
+    private ArrayList<NienKhoa> lisNienKhoa = new ArrayList<>();
+    private  HashMap<String,String> comboxList = new HashMap<>();
     String[] fruits = {"Apple", "Banana", "Orange", "Mango", "Pineapple"};
-    JComboBox<String> list = new JComboBox<>(fruits);
+    JComboBox<String> list;
     public JTextField TenLopHoc = new JTextField();
     private JTextField SiSoLop = new JTextField();
     private JTextField HocPhi = new JTextField();
@@ -40,11 +45,29 @@ public class Dslh_Panel {
     private JButton searchNBtn = new JButton("Tìm kiếm");
     private HashMap<Integer, Boolean> Flag = new HashMap<>();
     private String Id;
-
+    private String MaNienKhoa;
+    private ArrayList<LopHoc> lophocData = new ArrayList<>();
+    public int RowSeleted;
+    private LopHoc lopHoc = new LopHoc();
     public Dslh_Panel() {
         Flag.put(1, false);
         Flag.put(2, false);
         Flag.put(3, false);
+        lisNienKhoa = NienKhoaController.GetAll();
+        if(!lisNienKhoa.isEmpty()){
+            MaNienKhoa = lisNienKhoa.get(0).getMa();
+            lophocData = QldsLopHocController.getLopHocByNienKhoaId(new FilterModel("MaNienKhoa",MaNienKhoa));
+        }
+
+        String[] nienKhoas = new String[lisNienKhoa.size()];
+        int i=0;
+        for (var item: lisNienKhoa
+             ) {
+            comboxList.put(item.getNamHoc().trim(),item.getMa());
+            nienKhoas[i] = item.getNamHoc();
+            i++;
+        }
+        list = new JComboBox<>(nienKhoas);
         leftPanel.setBounds(0,0,400,600);
         leftPanel.setLayout(new BorderLayout());
         NienKhoaLabel.setBounds(15,25,90,35);
@@ -62,9 +85,16 @@ public class Dslh_Panel {
         CapNhatBtn.setBounds(112,250,60,35);
         XoaBtn.setBounds(209,250,60,35);
         LamMoiBtn.setBounds(304,250,60,35);
-        String[] columnNames = {"Tên lớp học", "Sĩ số lớp", "Học Phí","Niên khóa"};
-        String[][] data = {{"Lớp A","40","10000000","2012-2013"}};
-        var model = new DefaultTableModel(data,columnNames);
+        var model = new DefaultTableModel();
+        model.addColumn("Mã");
+        model.addColumn("Tên lớp");
+        model.addColumn("Sĩ số");
+        model.addColumn("Học Phí");
+        model.addColumn("Mã Niên khóa");
+        addData(model,lophocData);
+//        String[] columnNames = {"Tên lớp học", "Sĩ số lớp", "Học Phí","Niên khóa"};
+//        String[][] data = {{"Lớp A","40","10000000","2012-2013"}};
+//        var model = new DefaultTableModel(data,columnNames);
         table = new JTable(model);
         var scrollPane = new JScrollPane(table);
         TenLopHocError.setForeground(Color.RED);
@@ -102,7 +132,92 @@ public class Dslh_Panel {
         CapNhatBtn.setEnabled(false);
         addEventListenner();
     }
+    private void addData(DefaultTableModel model, ArrayList<LopHoc> data) {
+        for (var item : data){
+
+            model.addRow(new Object[]{item.getMa(),item.getTenLopHoc(),item.getSiSoLop(),item.getHocPhi(),item.getMaNienKhoa()});
+        }
+    }
+    private void refreshData(DefaultTableModel model, ArrayList<LopHoc> data) {
+        model.setRowCount(0);
+        for (var item : data){
+
+            model.addRow(new Object[]{item.getMa(),item.getTenLopHoc(),item.getSiSoLop(),item.getHocPhi(),item.getMaNienKhoa()});
+        }
+    }
     public  void addEventListenner(){
+        CapNhatBtn.addActionListener(new ActionListener() {
+                                         @Override
+                                         public void actionPerformed(ActionEvent e) {
+                                             try {
+                                                 lopHoc.setTenLopHoc(TenLopHoc.getText().trim());
+                                                 lopHoc.setSiSoLop(Integer.parseInt(SiSoLop.getText().trim()));
+                                                 lopHoc.setHocPhi(Float.parseFloat(HocPhi.getText().trim()));
+                                                 var result = QldsLopHocController.Update(lopHoc);
+                                                 if (result) {
+                                                     JOptionPane.showMessageDialog(null, "Cập nhật niên khóa thành công!");
+                                                     DefaultTableModel model = (DefaultTableModel) table.getModel();
+                                                     model.setValueAt(lopHoc.getTenLopHoc(), RowSeleted, 1);
+                                                     model.setValueAt(lopHoc.getSiSoLop(), RowSeleted, 2);
+                                                     model.setValueAt(lopHoc.getHocPhi(), RowSeleted, 3);
+                                                     TenLopHoc.setText("");
+                                                     HocPhi.setText("");
+                                                     SiSoLop.setText("");
+                                                     RowSeleted = -1;
+                                                     XoaBtn.setEnabled(false);
+                                                     CapNhatBtn.setEnabled(false);
+                                                 }
+                                             } catch (Exception ex) {
+                                                 System.out.println(ex);
+                                             }
+
+                                         }
+        });
+        XoaBtn.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+
+                    var result = QldsLopHocController.Delete(new DeleteModel("Ma",lopHoc.getMa()));
+                    if (result) {
+                        JOptionPane.showMessageDialog(null, "Xóa Lớp học thành công!");
+                        DefaultTableModel model = (DefaultTableModel) table.getModel();
+                        model.removeRow(RowSeleted);
+                        RowSeleted = -1;
+                        TenLopHoc.setText("");
+                        TenLopHoc.setText("");
+                        TenLopHoc.setText("");
+                        XoaBtn.setEnabled(false);
+                        CapNhatBtn.setEnabled(false);
+                    }
+
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+            }
+        });
+        ThemButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    var ma = QldsLopHocController.setMa();
+                    var lopHoc = new LopHoc(ma,TenLopHoc.getText().toString(),Integer.parseInt(SiSoLop.getText()),Float.parseFloat(HocPhi.getText()),MaNienKhoa);
+                    var result = QldsLopHocController.AddLopHoc(lopHoc);
+                    if(result){
+                        JOptionPane.showMessageDialog(null, "Thêm mới niên khóa thành công!");
+                        TenLopHoc.setText("");
+                        SiSoLop.setText("");
+                        HocPhi.setText("");
+                        DefaultTableModel model = (DefaultTableModel) table.getModel();
+                        model.addRow(new Object[]{lopHoc.getMa(),lopHoc.getTenLopHoc(),lopHoc.getSiSoLop(),lopHoc.getHocPhi()});
+                    }
+                }
+                catch (Exception ex){
+                    System.out.println(ex);
+                }
+
+            }
+        });
         TenLopHoc.addKeyListener(new KeyAdapter() {
 
             @Override
@@ -125,12 +240,10 @@ public class Dslh_Panel {
                 }
                 if (!Flag.containsValue(false)) {
                     ThemButton.setEnabled(true);
-                    CapNhatBtn.setEnabled(true);
-                    XoaBtn.setEnabled(true);
+
                 } else {
                     ThemButton.setEnabled(false);
-                    CapNhatBtn.setEnabled(false);
-                    XoaBtn.setEnabled(false);
+
                 }
             }
         });
@@ -144,6 +257,9 @@ public class Dslh_Panel {
                 HocPhi.setText("");
                 HocPhiError.setText("");
                 Id="";
+                ThemButton.setEnabled(false);
+                XoaBtn.setEnabled(false);
+                CapNhatBtn.setEnabled(false);
             }
         });
         SiSoLop.addKeyListener(new KeyAdapter() {
@@ -166,12 +282,10 @@ public class Dslh_Panel {
                 }
                 if (!Flag.containsValue(false)) {
                     ThemButton.setEnabled(true);
-                    CapNhatBtn.setEnabled(true);
-                    XoaBtn.setEnabled(true);
+
                 } else {
                     ThemButton.setEnabled(false);
-                    CapNhatBtn.setEnabled(false);
-                    XoaBtn.setEnabled(false);
+
                 }
             }
         });
@@ -197,13 +311,41 @@ public class Dslh_Panel {
                 }
                 if (!Flag.containsValue(false)) {
                     ThemButton.setEnabled(true);
-                    CapNhatBtn.setEnabled(true);
-                    XoaBtn.setEnabled(true);
+
                 } else {
                     ThemButton.setEnabled(false);
-                    CapNhatBtn.setEnabled(false);
-                    XoaBtn.setEnabled(false);
+
                 }
+            }
+        });
+        list.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                // Get the selected item
+                String selectedItem = (String) e.getItem();
+
+                MaNienKhoa = comboxList.get(selectedItem).trim();
+                FilterModel filterModel = new FilterModel("MaNienKhoa",MaNienKhoa);
+                lophocData = QldsLopHocController.getLopHocByNienKhoaId(filterModel);
+                refreshData((DefaultTableModel) table.getModel(),lophocData);
+            }
+        });
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+                int row = table.rowAtPoint(e.getPoint());
+                lopHoc.setMa(table.getValueAt(row, 0).toString().trim());
+                TenLopHoc.setText(table.getValueAt(row, 1).toString().trim());
+                SiSoLop.setText(table.getValueAt(row, 2).toString().trim());
+                HocPhi.setText(table.getValueAt(row, 2).toString().trim());
+
+                if(!lopHoc.getMa().isEmpty()){
+                    CapNhatBtn.setEnabled(true);
+                    XoaBtn.setEnabled(true);
+                    ThemButton.setEnabled(false);
+                }
+                RowSeleted = row;
             }
         });
     }

@@ -1,18 +1,21 @@
 package Models;
 
-public class NamHoc {
+public class LopHoc {
     private String Ma;
     private String TenLopHoc;
     private int SiSoLop;
     private float HocPhi;
     private String MaNienKhoa;
 
-    public NamHoc(String ma, String tenLopHoc, int siSoLop, float hocPhi, String maNienKhoa) {
+    public LopHoc(String ma, String tenLopHoc, int siSoLop, float hocPhi, String maNienKhoa) {
         Ma = ma;
         TenLopHoc = tenLopHoc;
         SiSoLop = siSoLop;
         HocPhi = hocPhi;
         MaNienKhoa = maNienKhoa;
+    }
+
+    public LopHoc() {
     }
 
     public String getMa() {

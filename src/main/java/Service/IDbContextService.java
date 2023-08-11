@@ -20,5 +20,5 @@ public interface IDbContextService {
     ResultSet GetDataByModel(String tableName, Object object);
     boolean filterMultiOneObject(String tableName, List<FilterModel> filterModel);
     ResultSet GetAll(String tableName);
-    int getCount(String tableName);
+    double getCount(String tableName);
 }
