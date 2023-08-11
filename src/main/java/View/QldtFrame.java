@@ -7,6 +7,7 @@ package View;
 import ViewComponent.Dslh_Panel;
 import ViewComponent.Panel_NienKhoa;
 import ViewComponent.PcgvPanel;
+import ViewComponent.PchsPanel;
 
 import javax.swing.*;
 
@@ -22,6 +23,7 @@ public class QldtFrame extends JFrame{
         jTabbedPane.add("Quản lý niên khóa", (new Panel_NienKhoa()).getjSplitPane());
         jTabbedPane.add("Quản lý danh sách lớp học", (new Dslh_Panel()).getjSplitPane());
         jTabbedPane.add("Phân công giáo viên", (new PcgvPanel()).getjSplitPane());
+        jTabbedPane.add("Phân công học sinh", (new PchsPanel()).getjSplitPane());
         add(jTabbedPane);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
